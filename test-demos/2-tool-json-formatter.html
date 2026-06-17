@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON 整理器 · JSON Formatter</title>
+<style>
+  :root{--bg:#0f1320;--card:#161c2e;--line:#26304a;--fg:#dde6f5;--mut:#8a97b5;--ok:#3ec98b;--err:#ff6b7a;--accent:#5b8cff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+  header{padding:16px 20px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:18px}
+  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;max-width:1000px;margin:0 auto}
+  @media(max-width:720px){.wrap{grid-template-columns:1fr}}
+  textarea{width:100%;height:300px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:ui-monospace,Consolas,monospace;font-size:13px;resize:vertical}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 8px;max-width:1000px;margin:0 auto}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+  #status{padding:8px 16px;max-width:1000px;margin:0 auto;font-size:13px;min-height:20px}
+  .ok{color:var(--ok)} .err{color:var(--err)}
+  .stats{display:flex;gap:18px;color:var(--mut);font-size:12px;padding:0 16px 16px;max-width:1000px;margin:0 auto}
+</style>
+</head>
+<body>
+  <header><h1>🧰 JSON 整理器</h1><div class="sub">粘贴 JSON → 一键格式化 / 压缩 / 校验，实时报错定位。纯前端、不上传。</div></header>
+  <div class="bar">
+    <button onclick="fmt(2)">格式化（2空格）</button>
+    <button onclick="fmt(0)">压缩</button>
+    <button class="ghost" onclick="sortKeys()">按键名排序</button>
+    <button class="ghost" onclick="copyOut()">复制结果</button>
+    <button class="ghost" onclick="sample()">示例</button>
+  </div>
+  <div class="wrap">
+    <textarea id="in" placeholder='在这里粘贴 JSON，例如 {"name":"demo","tags":[1,2,3]}'></textarea>
+    <textarea id="out" placeholder="结果输出" readonly></textarea>
+  </div>
+  <div id="status"></div>
+  <div class="stats"><span>字符 <b id="chars">0</b></span><span>键数 <b id="keys">0</b></span><span>最大深度 <b id="depth">0</b></span></div>
+<script>
+const $=id=>document.getElementById(id);
+function depthOf(o,d=0){if(o&&typeof o==='object'){let m=d;for(const k in o)m=Math.max(m,depthOf(o[k],d+1));return m;}return d;}
+function countKeys(o){let n=0;if(o&&typeof o==='object'){for(const k in o){if(!Array.isArray(o))n++;n+=countKeys(o[k]);}}return n;}
+function parse(){const t=$('in').value.trim();if(!t)throw{msg:'输入为空'};try{return JSON.parse(t);}catch(e){throw{msg:e.message};}}
+function show(obj,space){const s=JSON.stringify(obj,null,space);$('out').value=s;$('chars').textContent=s.length;$('keys').textContent=countKeys(obj);$('depth').textContent=depthOf(obj);$('status').innerHTML='<span class="ok">✓ 有效 JSON</span>';}
+function fmt(space){try{show(parse(),space);}catch(e){$('status').innerHTML='<span class="err">✗ 解析失败：'+e.msg+'</span>';}}
+function sortKeys(){try{const o=parse();const sort=v=>Array.isArray(v)?v.map(sort):(v&&typeof v==='object'?Object.keys(v).sort().reduce((a,k)=>(a[k]=sort(v[k]),a),{}):v);show(sort(o),2);}catch(e){$('status').innerHTML='<span class="err">✗ '+e.msg+'</span>';}}
+function copyOut(){$('out').select();try{document.execCommand('copy');$('status').innerHTML='<span class="ok">✓ 已复制</span>';}catch(e){}}
+function sample(){$('in').value='{"product":"Demo-Ranking","track":["bp","demo"],"investors":12,"honest":true,"nested":{"a":{"b":{"c":1}}}}';fmt(2);}
+$('in').addEventListener('input',()=>{$('chars').textContent=$('in').value.length;});
+</script>
+</body>
+</html>

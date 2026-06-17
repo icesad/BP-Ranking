@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>霓虹打砖块 Neon Breakout</title>
+<style>
+  body{margin:0;background:#0a0e1a;color:#cfe;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+  h1{font-size:20px;margin:14px;letter-spacing:2px;color:#5cf;text-shadow:0 0 10px #08f}
+  #hud{display:flex;gap:24px;font-size:14px;margin-bottom:8px}
+  canvas{background:#060912;border:1px solid #1b2a44;border-radius:10px;box-shadow:0 0 30px #04204a}
+  #msg{height:22px;margin-top:10px;color:#9fd;font-size:14px}
+  button{margin-top:8px;background:#1b6bbf;color:#fff;border:0;padding:8px 18px;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+  <h1>🧱 霓虹打砖块</h1>
+  <div id="hud"><span>得分 <b id="score">0</b></span><span>生命 <b id="lives">3</b></span><span>关卡 <b id="lvl">1</b></span></div>
+  <canvas id="c" width="480" height="360"></canvas>
+  <div id="msg">用 ← → 或鼠标移动挡板，接住小球，打光所有砖块</div>
+  <button id="btn">开始 / 重玩</button>
+<script>
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+let score = 0, lives = 3, lvl = 1, running = false, raf;
+let paddle, ball, bricks;
+
+function hud() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('lives').textContent = lives;
+  document.getElementById('lvl').textContent = lvl;
+}
+function reset(full) {
+  if (full) { score = 0; lives = 3; lvl = 1; }
+  paddle = { w: 80, h: 10, x: W / 2 - 40, y: H - 24, sp: 7 };
+  ball = { x: W / 2, y: H - 40, r: 7, dx: 3 + lvl * 0.4, dy: -3 - lvl * 0.4 };
+  bricks = [];
+  const cols = 8, rows = 3 + lvl;
+  for (let r = 0; r < rows; r++) for (let col = 0; col < cols; col++)
+    bricks.push({ x: 8 + col * 58, y: 30 + r * 22, w: 52, h: 16, hp: 1, hue: 200 + col * 14 });
+  hud();
+}
+const keys = {};
+addEventListener('keydown', e => keys[e.key] = 1);
+addEventListener('keyup', e => keys[e.key] = 0);
+cv.addEventListener('mousemove', e => {
+  const rc = cv.getBoundingClientRect();
+  paddle.x = Math.max(0, Math.min(W - paddle.w, e.clientX - rc.left - paddle.w / 2));
+});
+function loop() {
+  if (!running) return;
+  if (keys['ArrowLeft']) paddle.x = Math.max(0, paddle.x - paddle.sp);
+  if (keys['ArrowRight']) paddle.x = Math.min(W - paddle.w, paddle.x + paddle.sp);
+  ball.x += ball.dx; ball.y += ball.dy;
+  if (ball.x < ball.r || ball.x > W - ball.r) ball.dx *= -1;
+  if (ball.y < ball.r) ball.dy *= -1;
+  if (ball.y > H) {
+    lives--; hud();
+    if (lives <= 0) { running = false; document.getElementById('msg').textContent = '💀 游戏结束！点重玩'; return; }
+    ball = { x: W / 2, y: H - 40, r: 7, dx: 3, dy: -3 };
+  }
+  if (ball.y + ball.r > paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.w) {
+    ball.dy = -Math.abs(ball.dy);
+    ball.dx += ((ball.x - (paddle.x + paddle.w / 2)) / paddle.w) * 2;
+  }
+  for (const b of bricks) if (b.hp > 0 && ball.x > b.x && ball.x < b.x + b.w && ball.y > b.y && ball.y < b.y + b.h) {
+    b.hp = 0; ball.dy *= -1; score += 10; hud();
+  }
+  if (bricks.every(b => b.hp <= 0)) { lvl++; hud(); document.getElementById('msg').textContent = '🎉 过关！进入第 ' + lvl + ' 关'; reset(false); }
+  x.clearRect(0, 0, W, H);
+  for (const b of bricks) if (b.hp > 0) { x.fillStyle = 'hsl(' + b.hue + ',70%,55%)'; x.fillRect(b.x, b.y, b.w, b.h); }
+  x.fillStyle = '#5cf'; x.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  x.beginPath(); x.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); x.fillStyle = '#fff'; x.fill();
+  raf = requestAnimationFrame(loop);
+}
+document.getElementById('btn').onclick = () => {
+  cancelAnimationFrame(raf); reset(true); running = true;
+  document.getElementById('msg').textContent = '接住小球！'; loop();
+};
+reset(true);
+</script>
+</body>
+</html>

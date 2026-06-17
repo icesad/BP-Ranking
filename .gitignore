@@ -1,0 +1,18 @@
+# 依赖 / 构建产物
+node_modules/
+.next/
+out/
+
+# 环境变量与密钥 —— 绝不提交（含 DeepSeek/Tavily/GitHub OAuth/AUTH_SECRET 等）
+.env
+.env.local
+.env*.local
+
+# 本地数据：SQLite 库(含 -wal/-shm) + 上传文件，由 npm run seed 自动重建
+data/
+
+# 杂项
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

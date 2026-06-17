@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>豆点咖啡 · 在线选购</title>
+<style>
+  :root{--bg:#13100c;--card:#1e1813;--fg:#f3ead9;--mut:#b6a489;--accent:#c8884a;--line:#352b20}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+  header{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg)}
+  .brand{font-weight:800;font-size:20px}.brand span{color:var(--accent)}
+  .cartbtn{background:var(--accent);color:#241a10;border:0;padding:9px 16px;border-radius:10px;font-weight:700;cursor:pointer}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:980px;margin:22px auto;padding:0 18px}
+  @media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}
+  .p{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .p .img{height:120px;display:flex;align-items:center;justify-content:center;font-size:48px;background:radial-gradient(circle at 50% 30%,#3a2c1d,#1e1813)}
+  .p .body{padding:14px}.p h3{font-size:16px}.p .d{color:var(--mut);font-size:13px;min-height:34px;margin:6px 0}
+  .p .row{display:flex;justify-content:space-between;align-items:center}
+  .price{color:var(--accent);font-weight:800}
+  .add{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .drawer{position:fixed;top:0;right:0;width:330px;max-width:90vw;height:100%;background:var(--card);border-left:1px solid var(--line);transform:translateX(100%);transition:.25s;padding:18px;overflow:auto}
+  .drawer.open{transform:none}
+  .ci{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:10px 0;font-size:14px}
+  .qty button{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+  .checkout{width:100%;background:var(--accent);color:#241a10;border:0;padding:12px;border-radius:10px;font-weight:800;cursor:pointer;margin-top:14px}
+  .close{float:right;cursor:pointer;color:var(--mut);background:0;border:0;font-size:18px}
+  #ok{display:none;text-align:center;padding:30px 10px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">豆点<span>咖啡</span></div>
+    <button class="cartbtn" onclick="toggle(1)">🛒 购物车 (<span id="count">0</span>)</button>
+  </header>
+  <div class="grid" id="shop"></div>
+
+  <div class="drawer" id="drawer">
+    <button class="close" onclick="toggle(0)">✕</button>
+    <h2 style="margin-bottom:10px">购物车</h2>
+    <div id="items"></div>
+    <div id="empty" style="color:var(--mut);padding:20px 0">还是空的，去挑几款豆子吧 ☕</div>
+    <div id="summary" style="display:none">
+      <div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:800"><span>合计</span><span id="total">¥0</span></div>
+      <button class="checkout" onclick="checkout()">去结算</button>
+    </div>
+    <div id="ok"><div style="font-size:42px">✅</div><p>下单成功！<br>订单号 <b id="oid"></b><br>我们会尽快为你烘焙发货。</p><button class="checkout" onclick="resetShop()">继续购物</button></div>
+  </div>
+<script>
+const PRODUCTS=[
+  {id:1,e:'☕',n:'埃塞俄比亚 耶加雪菲',d:'柑橘花香，明亮果酸，手冲首选',p:78},
+  {id:2,e:'🫘',n:'哥伦比亚 慧兰',d:'坚果焦糖，醇厚顺口，日常口粮',p:62},
+  {id:3,e:'🌑',n:'意式拼配 深烘',d:'浓郁巧克力，适合做拿铁',p:55},
+  {id:4,e:'🍫',n:'巴西 喜拉多',d:'低酸顺滑，奶咖也好喝',p:49},
+  {id:5,e:'🌸',n:'巴拿马 瑰夏',d:'茉莉与蜂蜜，惊艳的花香',p:168},
+  {id:6,e:'🧊',n:'冷萃专用 拼配',d:'为冰滴/冷萃调配，回甘清爽',p:68},
+];
+const cart={};
+function money(n){return '¥'+n;}
+function render(){
+  document.getElementById('shop').innerHTML=PRODUCTS.map(p=>`
+    <div class="p"><div class="img">${p.e}</div><div class="body">
+      <h3>${p.n}</h3><div class="d">${p.d}</div>
+      <div class="row"><span class="price">${money(p.p)}</span><button class="add" onclick="add(${p.id})">加入购物车</button></div>
+    </div></div>`).join('');
+}
+function add(id){cart[id]=(cart[id]||0)+1;sync();toggle(1);}
+function setQty(id,delta){cart[id]=(cart[id]||0)+delta;if(cart[id]<=0)delete cart[id];sync();}
+function sync(){
+  const ids=Object.keys(cart);
+  document.getElementById('count').textContent=ids.reduce((s,k)=>s+cart[k],0);
+  const empty=ids.length===0;
+  document.getElementById('empty').style.display=empty?'block':'none';
+  document.getElementById('summary').style.display=empty?'none':'block';
+  let total=0;
+  document.getElementById('items').innerHTML=ids.map(id=>{const p=PRODUCTS.find(x=>x.id==id);total+=p.p*cart[id];return `
+    <div class="ci"><div><b>${p.n}</b><br><span style="color:var(--mut)">${money(p.p)}</span></div>
+    <div class="qty"><button onclick="setQty(${id},-1)">−</button> ${cart[id]} <button onclick="setQty(${id},1)">+</button></div></div>`;}).join('');
+  document.getElementById('total').textContent=money(total);
+}
+function toggle(open){document.getElementById('drawer').classList.toggle('open',!!open);}
+function checkout(){if(Object.keys(cart).length===0)return;document.getElementById('items').style.display='none';document.getElementById('summary').style.display='none';document.getElementById('empty').style.display='none';document.getElementById('oid').textContent='DD'+Date.now().toString().slice(-6);document.getElementById('ok').style.display='block';}
+function resetShop(){for(const k in cart)delete cart[k];document.getElementById('items').style.display='block';document.getElementById('ok').style.display='none';sync();toggle(0);}
+render();sync();
+</script>
+</body>
+</html>

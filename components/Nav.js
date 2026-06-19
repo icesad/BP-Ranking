@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { t } from '@/lib/i18n';
 import LanguageToggle from '@/components/LanguageToggle';
+import CityToggle from '@/components/CityToggle';
 
 // 核心入口常驻；其余收进"更多"下拉，避免导航栏拥挤
 const primaryLinks = [
@@ -12,17 +13,23 @@ const primaryLinks = [
   { href: '/feed', key: 'nav.feed' },
   { href: '/match', key: 'nav.match' },
 ];
-const moreLinks = [
+// 城市专属（随顶部城市切换而变）
+const cityLinks = [
+  { href: '/opc', key: 'nav.opc' },
   { href: '/news', key: 'nav.news' },
   { href: '/events', key: 'nav.events' },
   { href: '/resources', key: 'nav.resources' },
+];
+// 全站（与城市无关）
+const globalLinks = [
   { href: '/sectors', key: 'nav.sectors' },
   { href: '/following', key: 'nav.following' },
   { href: '/portfolio', key: 'nav.portfolio' },
   { href: '/investors', key: 'nav.investors' },
 ];
+const moreLinks = [...cityLinks, ...globalLinks];
 
-export default function Nav({ locale = 'zh', user = null }) {
+export default function Nav({ locale = 'zh', user = null, city = '上海', cities = ['上海'] }) {
   const pathname = usePathname();
   const en = locale === 'en';
   const [moreOpen, setMoreOpen] = useState(false);
@@ -53,16 +60,25 @@ export default function Nav({ locale = 'zh', user = null }) {
               {t(locale, l.key)}
             </Link>
           ))}
-          <button ref={moreBtn} type="button" onClick={toggleMore} className={moreLinks.some((l) => l.href === pathname) ? 'active' : ''}
-            style={{ background: 'none', border: 0, color: 'var(--text2)', cursor: 'pointer', font: 'inherit', fontSize: 14, padding: '6px 12px', whiteSpace: 'nowrap', borderRadius: 8 }}>
-            {en ? 'More ▾' : '更多 ▾'}
-          </button>
         </div>
+        <button ref={moreBtn} type="button" onClick={toggleMore} className={moreLinks.some((l) => l.href === pathname) ? 'active' : ''}
+          style={{ flex: '0 0 auto', background: 'none', border: '1px solid var(--border)', color: 'var(--text2)', cursor: 'pointer', font: 'inherit', fontSize: 14, padding: '6px 12px', whiteSpace: 'nowrap', borderRadius: 8 }}>
+          {en ? 'More ▾' : '更多 ▾'}
+        </button>
         {moreOpen && (
           <>
             <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 60 }} />
-            <div style={{ position: 'fixed', top: morePos?.top || 56, left: morePos?.left || 16, background: 'var(--card,#161c2e)', border: '1px solid var(--border)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 61, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
-              {moreLinks.map((l) => (
+            <div style={{ position: 'fixed', top: morePos?.top || 56, left: morePos?.left || 16, background: 'var(--card,#161c2e)', border: '1px solid var(--border)', borderRadius: 10, padding: 6, minWidth: 180, zIndex: 61, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+              <div style={{ padding: '4px 12px', fontSize: 11, color: 'var(--accent)', letterSpacing: '.05em' }}>📍 {city} · {en ? 'local (changes by city)' : '本地（随城市切换）'}</div>
+              {cityLinks.map((l) => (
+                <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
+                  style={{ display: 'block', padding: '8px 12px', borderRadius: 6, color: pathname === l.href ? 'var(--accent)' : 'var(--text)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  {t(locale, l.key)}
+                </Link>
+              ))}
+              <div style={{ borderTop: '1px solid var(--border)', margin: '6px 0' }} />
+              <div style={{ padding: '4px 12px', fontSize: 11, color: 'var(--text2)', letterSpacing: '.05em' }}>{en ? 'site-wide' : '全站'}</div>
+              {globalLinks.map((l) => (
                 <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
                   style={{ display: 'block', padding: '8px 12px', borderRadius: 6, color: pathname === l.href ? 'var(--accent)' : 'var(--text)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   {t(locale, l.key)}
@@ -74,6 +90,7 @@ export default function Nav({ locale = 'zh', user = null }) {
         <form action="/search" className="nav-search">
           <input type="text" name="q" placeholder={t(locale, 'nav.search')} aria-label="search" />
         </form>
+        <CityToggle cities={cities} current={city} />
         <LanguageToggle locale={locale} />
         <Link href={isBpCta ? '/upload' : '/upload-demo'} className="btn">{t(locale, isBpCta ? 'nav.upload' : 'nav.uploadDemo')}</Link>
         {user ? (

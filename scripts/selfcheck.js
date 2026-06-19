@@ -16,7 +16,7 @@ function main() {
   const db = getDb();
 
   console.log('\n=== 1) 表 ===');
-  for (const t of ['suggestions', 'bp_events', 'users', 'news', 'events', 'follows', 'portfolios', 'ledger', 'tips', 'prompt_packs', 'pack_purchases', 'user_profiles', 'user_socials', 'needs', 'resources']) hasTable(db, t) ? ok(`表 ${t}`) : no(`缺表 ${t}`);
+  for (const t of ['suggestions', 'bp_events', 'users', 'news', 'events', 'follows', 'portfolios', 'ledger', 'tips', 'prompt_packs', 'pack_purchases', 'user_profiles', 'user_socials', 'needs', 'resources', 'nav_links', 'communities']) hasTable(db, t) ? ok(`表 ${t}`) : no(`缺表 ${t}`);
 
   console.log('\n=== 2) 字段 ===');
   const bpsC = cols(db, 'bps');

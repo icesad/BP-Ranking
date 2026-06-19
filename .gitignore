@@ -16,3 +16,6 @@ data/
 npm-debug.log*
 .DS_Store
 Thumbs.db
+
+# Claudies 已拆为独立仓库，不随本仓库提交
+Claudies-Windows/

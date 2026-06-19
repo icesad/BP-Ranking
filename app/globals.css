@@ -33,8 +33,8 @@ a { color: inherit; text-decoration: none; }
   border-bottom: 1px solid var(--border);
 }
 .nav-inner {
-  max-width: 1080px; margin: 0 auto; padding: 0 16px;
-  display: flex; align-items: center; gap: 20px; height: 56px;
+  max-width: 1240px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 10px; height: 56px;
 }
 .logo { font-weight: 800; font-size: 18px; white-space: nowrap; }
 .logo span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -387,8 +387,9 @@ table.simple th { color: var(--text2); font-size: 12px; font-weight: 600; }
 
 /* ===== 搜索框 ===== */
 .nav-search { display: flex; }
-.nav-search input { width: 150px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px; outline: none; }
-.nav-search input:focus { border-color: var(--accent); width: 190px; }
+.nav-search input { width: 120px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px; outline: none; }
+.nav-search input:focus { border-color: var(--accent); width: 170px; }
+@media (max-width: 1100px) { .nav-search { display: none; } }
 .search-page-form { display: flex; gap: 8px; margin-bottom: 18px; }
 .search-page-form input { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 15px; outline: none; }
 .search-page-form input:focus { border-color: var(--accent); }

@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic';
 
 export default function ResourcesPage({ searchParams }) {
   const en = cookies().get('lang')?.value === 'en';
+  const city = cookies().get('city')?.value || '上海';
   const tab = searchParams?.tab === 'resources' ? 'resources' : 'needs';
   const type = (searchParams?.type || '').toString();
-  const items = tab === 'resources' ? resourcesList({ type }) : needsList({ type });
-  const rcounts = resourceCounts();
+  const items = tab === 'resources' ? resourcesList({ city, type }) : needsList({ city, type });
+  const rcounts = resourceCounts(city);
   const Tn = (k) => NEED_TYPES[k] || k;
   const qs = (o) => '?' + new URLSearchParams({ tab, ...(type ? { type } : {}), ...o }).toString();
 

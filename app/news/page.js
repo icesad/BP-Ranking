@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic';
 
 export default function NewsPage({ searchParams }) {
   const en = cookies().get('lang')?.value === 'en';
+  const city = cookies().get('city')?.value || '上海';
   const region = (searchParams?.region || '').toString();
-  const items = newsList({ region, limit: 60 });
-  const regions = newsRegions();
+  const items = newsList({ city, region, limit: 60 });
+  const regions = newsRegions(city);
 
   return (
     <div>

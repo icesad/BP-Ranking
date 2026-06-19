@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import Nav from '@/components/Nav';
 import VisitTracker from '@/components/VisitTracker';
 import { getSessionUser } from '@/lib/auth';
-import { userPoints } from '@/lib/queries';
+import { userPoints, citiesAvailable } from '@/lib/queries';
 
 export const metadata = {
   title: 'Demo-Ranking | AI 时代，你的 Demo 到底值多少？12 位 AI 投资人联网估值',
@@ -14,11 +14,13 @@ export default function RootLayout({ children }) {
   const locale = cookies().get('lang')?.value === 'en' ? 'en' : 'zh';
   const su = getSessionUser();
   const user = su ? { handle: su.handle, name: su.name, avatar: su.avatar, points: (() => { try { return userPoints(su.uid); } catch { return 0; } })() } : null;
+  const city = cookies().get('city')?.value || '上海';
+  let cities = ['上海']; try { cities = citiesAvailable(); } catch {}
   return (
     <html lang={locale === 'en' ? 'en' : 'zh-CN'}>
       <body>
         <VisitTracker />
-        <Nav locale={locale} user={user} />
+        <Nav locale={locale} user={user} city={city} cities={cities} />
         <main className="container">{children}</main>
         <footer className="footer">
           <p>{locale === 'en'

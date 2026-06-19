@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getSessionUser } from '@/lib/auth';
 import { matchCandidates } from '@/lib/queries';
+import { avatarDataUri } from '@/lib/avatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export default function MatchPage({ searchParams }) {
           ) : res.items.map((m) => (
             <div key={m.handle} className="rank-row">
               <div className="rank-main" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {m.avatar ? <img src={m.avatar} alt="" width={36} height={36} style={{ borderRadius: '50%' }} /> : <span style={{ fontSize: 28 }}>👤</span>}
+                <img src={m.avatar || avatarDataUri(m.handle)} alt="" width={36} height={36} style={{ borderRadius: '50%' }} />
                 <div>
                   <div className="rank-title"><Link href={`/u/${m.handle}`}>{m.name || m.handle}</Link> <span className="hint">@{m.handle}</span></div>
                   <div className="rank-sub">{m.reason}</div>

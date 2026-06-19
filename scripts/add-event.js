@@ -17,12 +17,28 @@ const { getDb } = require('../lib/db');
 function futureDate(days) { const d = new Date(Date.now() + days * 86400000); return d.toISOString().slice(0, 10); }
 
 function insert(db, e) {
-  return db.prepare(`INSERT INTO events (title, host, region, venue, start_at, end_at, signup_url, source_url, description, tags)
-    VALUES (?,?,?,?,?,?,?,?,?,?)`).run(
+  if (db.prepare('SELECT 1 FROM events WHERE title = ?').get(e.title)) return; // 按标题去重
+  return db.prepare(`INSERT INTO events (title, host, region, venue, start_at, end_at, signup_url, source_url, description, tags, category, price, time_text)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     e.title, e.host || '', e.region || '', e.venue || '', e.start_at || '', e.end_at || '',
-    e.signup_url || '', e.source_url || '', e.description || '', JSON.stringify(e.tags || [])
+    e.signup_url || '', e.source_url || '', e.description || '', JSON.stringify(e.tags || []),
+    e.category || '', e.price || '', e.time_text || ''
   );
 }
+// OnePilot 活动日历 2026 年 6 月真实样本（来源含小红书，需点开扫码）
+const ONEPILOT = [
+  { start_at: '2026-06-03', time_text: '09:00-12:00', region: '上海', category: '峰会', price: '', title: '2026上海超级个体（OPC）经济大会', host: '', description: '聚焦一人公司/超级个体的经济大会。' },
+  { start_at: '2026-06-04', time_text: '19:00-21:30', region: '上海', category: '沙龙', price: '', title: 'Open Drink-Founder Mixer创业小酒馆3.0第26期', host: '', description: '创业者社交小酒馆。' },
+  { start_at: '2026-06-04', time_text: '20:30-22:00', region: '上海', category: 'Meetup', price: '', title: '上海线下 | AI创意 OPEN DECK活动', host: '', description: 'AI 创意分享与展示。' },
+  { start_at: '2026-06-05', time_text: '下午2:00', region: '上海', category: '沙龙', price: '', title: 'AI时代下数据知识产权保护和价值评估——走进国家知识产权运营（上海）国际服务平台', host: '国家知识产权运营（上海）国际服务平台', description: '走进平台，探讨 AI 时代数据知识产权保护与价值评估。' },
+  { start_at: '2026-06-06', time_text: '17:00-19:00', region: '上海', category: '路演', price: '', title: 'AI Nova 点火之夜', host: '', description: 'AI 项目路演之夜。' },
+  { start_at: '2026-06-06', time_text: '13:00-17:00', region: '上海', category: '工作坊', price: '', title: '智能体精细化管理与算力-Token 规模化运营实践', host: '', description: '智能体精细化管理与算力/Token 规模化运营实践。' },
+  { start_at: '2026-06-07', time_text: '14:30-18:00', region: '上海', category: 'Meetup', price: '', title: '真格 00 后 Vibe Meeting', host: '真格基金', description: '面向 00 后创业者的聚会。' },
+  { start_at: '2026-06-07', time_text: '14:00-17:00', region: '上海', category: '沙龙', price: '', title: 'AI创业秘聊局05期 | AI OPC从0到1全链路落地，单人成军 AI破局', host: '', description: 'AI OPC 从 0 到 1 全链路落地、单人成军。' },
+  { start_at: '2026-06-09', time_text: '19:00-21:30', region: '上海', category: 'GEEK NIGHT TALK', price: '50元参会押金', title: '当AI开始拥有记忆', host: '上海模速空间、Think AI星科社区', venue: '上海模速空间B区三楼多功能厅', description: '极客夜话：AI 记忆从便利到边界，含两场记忆实验。' },
+  { start_at: '2026-06-17', time_text: '14:00-15:15', region: '上海', category: '线下公开课', price: '69.90元', title: '柚米Club「AIGC线下公开课」', host: '柚米club-社交组局', venue: '西康路WeWork 3楼公区', description: 'AIGC 新手避坑、免费工具推荐、大佬资源对接，到场可领 WeWork 福利包。' },
+  { start_at: '2026-06-17', time_text: '15:30-17:30', region: '上海', category: '挑战赛', price: '免费', title: 'WAIC Future Tech OPC独立先锋挑战赛总决赛', host: 'WAIC Future Tech OPC', venue: '世博滨江酒店四季厅', description: 'WAIC OPC 独立先锋挑战赛总决赛，多团队展示 AI 创业项目。' },
+];
 
 function main() {
   const db = getDb();
@@ -44,15 +60,14 @@ function main() {
     return;
   }
   if (cmd === 'sample') {
-    insert(db, { title: '[示例] 上海 Vibe Coder 周末聚会', host: 'OPC 社区', region: '上海', venue: '徐汇 · 某共享空间', start_at: futureDate(10), signup_url: 'https://example.com/signup', description: '示例活动，可删除。AI 编程作品互评 + 自由交流。', tags: ['聚会', '上海'] });
-    insert(db, { title: '[示例] AI 产品 48 小时黑客松', host: 'Indie 社群', region: '线上', venue: 'Online', start_at: futureDate(24), signup_url: 'https://example.com/hackathon', description: '示例活动，可删除。组队用 AI 快速做产品并路演。', tags: ['黑客松'] });
-    console.log('✅ 已插入 2 条【示例】活动。打开 /events 查看；用 node scripts/add-event.js list 看 id，del 删除。');
+    let n = 0; for (const e of ONEPILOT) { if (insert(db, e) !== undefined || true) n++; }
+    console.log(`✅ 已灌入 OnePilot 2026年6月真实活动样本(按标题去重)。打开 /events 看列表+月历(深色版)。list 看 id，del 删除。`);
     return;
   }
   if (cmd === 'add') {
-    const [, , , title, region, start_at, signup_url, host, venue, description] = process.argv;
-    if (!title) { console.log('用法：node scripts/add-event.js add "标题" "地区" "YYYY-MM-DD" "报名URL" "主办" "地点" "描述"'); return; }
-    insert(db, { title, region, start_at, signup_url, host, venue, description, tags: [] });
+    const [, , , title, region, start_at, signup_url, host, venue, description, category, price, time_text] = process.argv;
+    if (!title) { console.log('用法：node scripts/add-event.js add "标题" "地区" "YYYY-MM-DD" "报名URL" "主办" "地点" "描述" "类型" "价格" "时间段"'); return; }
+    insert(db, { title, region, start_at, signup_url, host, venue, description, category, price, time_text, tags: [] });
     console.log(`✅ 已录入活动「${title}」。打开 /events 查看。`);
     return;
   }
